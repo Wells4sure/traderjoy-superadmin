@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { LayoutDashboard, Building2 } from "lucide-react";
+import { LayoutDashboard, Building2, ShieldAlert, Activity } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
 const navItems = [
   { href: "/dashboard",   label: "Overview",    icon: LayoutDashboard },
   { href: "/businesses",  label: "Businesses",  icon: Building2 },
+  { href: "/audit-logs",  label: "Audit Logs",  icon: ShieldAlert },
+  { href: "/system",      label: "System",      icon: Activity },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
