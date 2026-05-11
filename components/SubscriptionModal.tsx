@@ -246,14 +246,62 @@ export function SubscriptionModal({ businessId, subscription, onClose, onSaved }
 
         {error && <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
 
+        {/* Removal log panel */}
+        {removeLogs.length > 0 && (
+          <div className="rounded-lg border border-slate-200 bg-slate-950 px-3 py-2.5 space-y-1 font-mono text-[11px]">
+            {removeLogs.map((log, i) => (
+              <div key={i} className="flex items-start gap-1.5">
+                {log.type === "ok"  && <CheckCircle2 className="h-3 w-3 text-emerald-400 mt-0.5 shrink-0" />}
+                {log.type === "err" && <XCircle      className="h-3 w-3 text-red-400    mt-0.5 shrink-0" />}
+                {log.type === "info"&& <Info         className="h-3 w-3 text-slate-400  mt-0.5 shrink-0" />}
+                <span className={
+                  log.type === "ok"  ? "text-emerald-400" :
+                  log.type === "err" ? "text-red-400"     :
+                  "text-slate-300"
+                }>{log.msg}</span>
+              </div>
+            ))}
+            {removing && (
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                <span>Working…</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Confirm remove prompt */}
+        {confirmRemove && !removing && removeLogs.length === 0 && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 space-y-2">
+            <p className="text-xs font-medium text-red-700">
+              Remove <strong>{subscription!.addon.name}</strong>? This cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleRemove}
+                className="flex items-center gap-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs font-medium transition-colors"
+              >
+                <Trash2 className="h-3 w-3" />
+                Yes, remove
+              </button>
+              <button
+                onClick={() => setConfirmRemove(false)}
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-white transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 pt-1">
-          {isEdit && (
+          {isEdit && !confirmRemove && removeLogs.length === 0 && (
             <button
-              onClick={handleRemove}
+              onClick={() => setConfirmRemove(true)}
               disabled={removing}
               className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
             >
-              {removing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              <Trash2 className="h-3.5 w-3.5" />
               Remove
             </button>
           )}
@@ -263,7 +311,7 @@ export function SubscriptionModal({ businessId, subscription, onClose, onSaved }
           </button>
           <button
             onClick={handleSave}
-            disabled={saving || (loadingAddons && !isEdit)}
+            disabled={saving || (loadingAddons && !isEdit) || confirmRemove || removing}
             className="flex items-center gap-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
           >
             {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
