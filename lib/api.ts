@@ -18,7 +18,7 @@ export async function fetchAnalytics() {
 export async function fetchBusinessDetails(id: string | number) {
   const res = await fetch(`${API_BASE}/super-admin/business/${id}`, {
     headers: headers(),
-    next: { revalidate: 30 },
+    cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch business");
   return res.json();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Loader2, Trash2 } from "lucide-react";
+import { X, Loader2, Trash2, CheckCircle2, XCircle, Info } from "lucide-react";
 
 type SubStatus = "TRIAL" | "ACTIVE" | "PAST_DUE" | "SUSPENDED" | "EXPIRED" | "CANCELED";
 type BillingCycle = "MONTHLY" | "YEARLY";
@@ -47,8 +47,14 @@ export function SubscriptionModal({ businessId, subscription, onClose, onSaved }
 
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const [error, setError] = useState("");
   const [loadingAddons, setLoadingAddons] = useState(!isEdit);
+  const [removeLogs, setRemoveLogs] = useState<{ msg: string; type: "info" | "ok" | "err" }[]>([]);
+
+  function addLog(msg: string, type: "info" | "ok" | "err" = "info") {
+    setRemoveLogs((prev) => [...prev, { msg, type }]);
+  }
 
   useEffect(() => {
     if (isEdit) return;
@@ -97,16 +103,34 @@ export function SubscriptionModal({ businessId, subscription, onClose, onSaved }
   }
 
   async function handleRemove() {
-    if (!confirm("Remove this subscription? This cannot be undone.")) return;
     setRemoving(true);
     setError("");
+    setRemoveLogs([]);
     try {
+      const subName = subscription!.addon.name;
+      addLog(`Preparing to remove "${subName}" (id: ${subscription!.id})…`);
+      addLog(`Sending DELETE request to server…`);
+
       const res = await fetch(
         `/api/super-admin/businesses/${businessId}/subscriptions/${subscription!.id}`,
         { method: "DELETE" },
       );
+
+      addLog(`Server responded with status ${res.status}`);
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to remove");
+
+      if (!res.ok) {
+        addLog(`Error: ${json.error ?? "Unknown error"}`, "err");
+        throw new Error(json.error ?? "Failed to remove");
+      }
+
+      if (json?.payload?.deleted) {
+        addLog(`Confirmed deleted: addon="${json.payload.deleted.addon}" status=${json.payload.deleted.status}`, "ok");
+      }
+      addLog(`Subscription removed successfully. Refreshing page…`, "ok");
+
+      // Small pause so user can see the success log before modal closes
+      await new Promise((r) => setTimeout(r, 800));
       onSaved();
       onClose();
     } catch (e: any) {
